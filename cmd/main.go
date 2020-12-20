@@ -16,8 +16,18 @@ func initialization() {
 	}
 	tokenTypeTable.Insert("INTEGER", 0)
 	tokenTypeTable.Insert("PLUS", fmt.Sprintf("%v", '+'))
+	tokenTypeTable.Insert("MINUS", fmt.Sprintf("%v", '-'))
 	tokenTypeTable.Insert("EOF", fmt.Sprintf("%v", '\n'))
 	tokenTypeTable.PrintAll()
+}
+
+func interceptPanic(p interface{}) {
+	cvt, ok := p.(error)
+	if ok {
+		if p != nil {
+			panic(cvt.Error)
+		}
+	}
 }
 
 func main() {
@@ -25,19 +35,15 @@ func main() {
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Print("pisang> ")
 	text, inputErr := reader.ReadString('\n')
-	if inputErr != nil {
-		panic(inputErr)
-	}
+	interceptPanic(inputErr)
 
 	lexer, lexerErr := lexer.New(text)
-	if lexerErr != nil {
-		panic(lexerErr)
-	}
+	interceptPanic(lexerErr)
 
 	syntax, syntaxErr := syntax.New(lexer)
-	if syntaxErr != nil {
-		panic(syntaxErr)
-	}
+	interceptPanic(syntaxErr)
 
-	fmt.Println(syntax.Expression())
+	v, exprErr := syntax.Expression()
+	interceptPanic(exprErr)
+	fmt.Println(v)
 }

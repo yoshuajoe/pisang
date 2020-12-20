@@ -17,35 +17,46 @@ func New(lexer lexer.ILexer) (*Syntax, error) {
 	}, nil
 }
 
-func (syntax *Syntax) Expression() interface{} {
-	t, err := syntax.lexer.GetNextToken()
-	syntax.currToken = t
-	if err != nil {
-		return err
-	}
-
-	left := syntax.currToken
-	syntax.verify("INTEGER")
-	op := syntax.currToken
-	syntax.verify("PLUS")
-	right := syntax.currToken
-	syntax.verify("INTEGER")
-
-	result := 0
-	if op.Type == "PLUS" {
-		result = left.Value.(int) + right.Value.(int)
-	}
-	return result
-}
-
-func (syntax *Syntax) verify(tokenType string) error {
-	fmt.Println(syntax.currToken)
-	if syntax.currToken.Type == tokenType {
-		t, err := syntax.lexer.GetNextToken()
-		syntax.currToken = t
-		if err != nil {
-			return err
+func (syntax *Syntax) Expression() (interface{}, error) {
+	syntax.Fetch()
+	result := syntax.Term()
+	for {
+		if syntax.currToken.Type != "EOF" {
+			syntax.Fetch()
+			if syntax.currToken.Type == "PLUS" {
+				syntax.Fetch()
+				result += syntax.Term()
+			} else if syntax.currToken.Type == "MINUS" {
+				syntax.Fetch()
+				result -= syntax.Term()
+			}
+		} else {
+			break
 		}
 	}
-	return nil
+	return result, nil
+}
+
+func (syntax *Syntax) Term() int {
+	syntax.shouldBe("INTEGER", syntax.currToken.Type)
+	i, _ := syntax.currToken.Value.(int)
+	return i
+}
+
+func (syntax *Syntax) Fetch() {
+	token, err := syntax.lexer.GetNextToken()
+	intercept(err)
+	syntax.currToken = token
+}
+
+func (syntax *Syntax) shouldBe(should string, given string) {
+	if should != given {
+		panic(fmt.Sprintf("Sytax error: should be %v yet given %v at position %v", should, given, syntax.lexer.GetPosition()))
+	}
+}
+
+func intercept(p error) {
+	if p != nil {
+		panic(p)
+	}
 }
