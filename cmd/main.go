@@ -7,6 +7,7 @@ import (
 	"pisang/internal/app/lexer"
 	"pisang/internal/app/syntax"
 	"pisang/internal/pkg/tokentype"
+	"strings"
 )
 
 func initialization() {
@@ -32,18 +33,23 @@ func interceptPanic(p interface{}) {
 
 func main() {
 	initialization()
-	reader := bufio.NewReader(os.Stdin)
-	fmt.Print("pisang> ")
-	text, inputErr := reader.ReadString('\n')
-	interceptPanic(inputErr)
+	file, err := os.Open(os.Args[1])
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+	scanner := bufio.NewScanner(file)
+	var lines []string
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+	}
 
-	lexer, lexerErr := lexer.New(text)
+	lexer, lexerErr := lexer.New(strings.Join(lines, "\n"))
 	interceptPanic(lexerErr)
 
 	syntax, syntaxErr := syntax.New(lexer)
 	interceptPanic(syntaxErr)
 
-	v, exprErr := syntax.Expression()
+	_, exprErr := syntax.Program()
 	interceptPanic(exprErr)
-	fmt.Println(v)
 }

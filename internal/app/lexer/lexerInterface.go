@@ -6,4 +6,5 @@ type ILexer interface {
 	GetLine() string
 	GetPosition() int
 	GetNextToken() (token.Token, error)
+	IsReservedKeyword(string) bool
 }

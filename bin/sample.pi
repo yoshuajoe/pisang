@@ -1,0 +1,7 @@
+PROGRAM luasSegitiga;
+BEGIN
+    alas := 9;
+    tinggi := 5;
+    luas := alas*tinggi/2;
+    ASSERT luas;
+END.
