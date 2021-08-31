@@ -1,5 +1,5 @@
 # pisang
-Pisang is a fun. This is a simple interpreter, just for fun, hobby and upskilling.
+Pisang is fun. This is a simple interpreter, just for fun, hobby and upskilling.
 
 ## How to build
 Please use this command to build Pisang to your machine
