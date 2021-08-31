@@ -50,7 +50,7 @@ func (lexer *Lexer) IsReservedKeyword(key string) bool {
 }
 
 func (lexer *Lexer) skipWhiteSpace() {
-	for lexer.currChar == '\n' || lexer.currChar == ' ' {
+	for lexer.currChar == '\n' || lexer.currChar == ' ' || lexer.currChar == '\t' {
 		lexer.advance()
 	}
 }
@@ -70,9 +70,29 @@ func (lexer *Lexer) integer() (int, error) {
 	return i, e
 }
 
+func (lexer *Lexer) string() (string, error) {
+	var result string
+
+	stringBound := 1
+	lexer.advance()
+	for {
+		if stringBound < 2 {
+			if lexer.currChar == '"' {
+				stringBound += 1
+			} else {
+				result = fmt.Sprintf("%s%s", result, string(lexer.currChar))
+			}
+			lexer.advance()
+		} else {
+			break
+		}
+	}
+	return result, nil
+}
+
 func (lexer *Lexer) _id() (token.Token, error) {
 	var result string
-	for unicode.IsLetter(rune(lexer.currChar)) {
+	for unicode.IsLetter(rune(lexer.currChar)) || lexer.currChar == '_' {
 		result = fmt.Sprintf("%s%s", result, string(lexer.currChar))
 		lexer.advance()
 	}
@@ -111,8 +131,15 @@ func (lexer *Lexer) GetNextToken() (token.Token, error) {
 			Value: '.',
 		}, nil
 	}
-	if lexer.currChar == ' ' || lexer.currChar == '\n' {
+	if lexer.currChar == ' ' || lexer.currChar == '\n' || lexer.currChar == '\t' {
 		lexer.skipWhiteSpace()
+	}
+	if lexer.currChar == '"' {
+		s, e := lexer.string()
+		return token.Token{
+			Type:  "STRING",
+			Value: s,
+		}, e
 	}
 	if unicode.IsLetter(rune(lexer.currChar)) {
 		return lexer._id()

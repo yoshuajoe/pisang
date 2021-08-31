@@ -1,0 +1,8 @@
+PROGRAM kalori;
+BEGIN
+    nasiPerGram := 1000;
+    laukRataRata := 5000;
+    jumlahMakan := 3;
+    totalKalori := (nasiPerGram + laukRataRata) * jumlahMakan;
+    ASSERT totalKalori;
+END.
