@@ -9,10 +9,18 @@ Please use this command to build Pisang to your machine
 
 ## Current working syntax
 ```
-PROGRAM <your program name>;
-BEGIN
-  <expression>;
-END.
+alas := 9;
+tinggi := 5;
+luas := alas*tinggi/2;
+assert luas;
+
+siswaDalamKelas := ["Aldo", "Aldi", "Andi", "Ali", "Ando"];
+if siswaDalamKelas[1] == "Aldi"{
+    assert "Halo " + siswaDalamKelas[1] + ", salam kenal!";
+}
+
+assert siswaDalamKelas[0];
+
 ```
 Yeah I know this is still needing semicolon and flying old-style Pascal-like. Anyway, if you're interested to contribute please create an issues then fork it.
 Please see `bin/sample.pi`
