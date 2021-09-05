@@ -1,7 +1,11 @@
-PROGRAM luasSegitiga;
-BEGIN
-    alas := 9;
-    tinggi := 5;
-    luas := alas*tinggi/2;
-    ASSERT luas;
-END.
+alas := 9;
+tinggi := 5;
+luas := alas*tinggi/2;
+assert luas;
+
+siswaDalamKelas := ["Aldo", "Aldi", "Andi", "Ali", "Ando"];
+if siswaDalamKelas[1] == "Aldi"{
+    assert "Halo " + siswaDalamKelas[1] + ", salam kenal!";
+}
+
+assert siswaDalamKelas[0];

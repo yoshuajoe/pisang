@@ -5,20 +5,27 @@ type Object struct {
 	Type  string
 }
 
-func New(name string, t string, val interface{}) *Object {
-	if t == "" {
-		t = "_object"
-	}
-	return &Object{
-		Value: val,
-		Type:  t,
-	}
-}
+type IObject interface {
+	Add(IObject)
+	Minus(IObject)
+	Asterisk(IObject)
+	Caret(IObject)
+	Slash(IObject)
+	And(IObject) IObject
+	Or(IObject) IObject
+	XOr(IObject) IObject
+	Mod(IObject) IObject
+	LShift(IObject) IObject
+	RShift(IObject) IObject
+	Assign(IObject)
+	Dispose()
 
-func (obj *Object) Assign(newObj *Object) {
-	obj = newObj
-}
-
-func (obj *Object) Dispose() {
-	obj = nil
+	Gt(IObject) IObject
+	Gte(IObject) IObject
+	Lt(IObject) IObject
+	Lte(IObject) IObject
+	Eq(IObject) IObject
+	Neq(IObject) IObject
+	GetValue() interface{}
+	GetType() string
 }

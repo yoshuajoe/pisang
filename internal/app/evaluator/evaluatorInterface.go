@@ -5,5 +5,5 @@ import (
 )
 
 type IEval interface {
-	Eat(a, b *object.Object, op string) *object.Object
+	Eat(a, b object.IObject, op string) object.IObject
 }

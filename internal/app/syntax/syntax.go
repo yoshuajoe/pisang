@@ -1,11 +1,14 @@
 package syntax
 
 import (
-	"errors"
 	"fmt"
+	"go/ast"
 	"pisang/internal/app/evaluator"
 	"pisang/internal/app/lexer"
 	"pisang/internal/app/object"
+	"pisang/internal/app/object/integer"
+	"pisang/internal/app/object/listo"
+	"pisang/internal/app/object/stringo"
 	"pisang/internal/app/symbol"
 	"pisang/internal/pkg/token"
 )
@@ -13,6 +16,7 @@ import (
 type Syntax struct {
 	lexer       lexer.ILexer
 	currToken   token.Token
+	ast         *ast.Node
 	program     string
 	symbolTable symbol.Symbol
 	evaluator   evaluator.IEval
@@ -32,26 +36,8 @@ func New(lexer lexer.ILexer) (*Syntax, error) {
 	}, nil
 }
 
-func (syntax *Syntax) InitProgram() (interface{}, error) {
-	if syntax.currToken.Value == "PROGRAM" {
-		syntax.shouldBe("_id", syntax.currToken.Type)
-		syntax.Fetch()
-
-		syntax.shouldBe("_id", syntax.currToken.Type)
-		syntax.program = syntax.currToken.Value.(string)
-		syntax.Fetch()
-
-		syntax.shouldBe("SEMICOLON", syntax.currToken.Type)
-		syntax.Fetch()
-		return nil, nil
-	}
-	return nil, nil
-}
-
 func (syntax *Syntax) Program() (interface{}, error) {
-	syntax.InitProgram()
 	syntax.CompoundStatement()
-
 	return nil, nil
 }
 
@@ -59,30 +45,72 @@ func (syntax *Syntax) Assert() (interface{}, error) {
 	syntax.shouldBe("_id", syntax.currToken.Type)
 	syntax.Fetch()
 	_var := syntax.Expression()
-	vval := fmt.Sprintf("<type:%s> %v", _var.Type, _var.Value)
+	vval := fmt.Sprintf("<type:%s> %v", _var.GetType(), _var.GetValue())
 	fmt.Println(vval)
+	return nil, nil
+}
+
+func (syntax *Syntax) ConditionStatement() (interface{}, error) {
+	syntax.CompoundStatement()
+	return nil, nil
+}
+
+func (syntax *Syntax) ConditionExpression() object.IObject {
+	var returned object.IObject
+	a := syntax.Expression()
+	for {
+		if syntax.currToken.Type == "EQ" {
+			syntax.shouldBe("EQ", syntax.currToken.Type)
+			syntax.Fetch()
+			b := syntax.Expression()
+			returned = a.Eq(b)
+		} else if syntax.currToken.Type == "NEQ" {
+			syntax.shouldBe("NEQ", syntax.currToken.Type)
+			syntax.Fetch()
+			b := syntax.Expression()
+			returned = a.Eq(b)
+		} else if syntax.currToken.Type == "GT" {
+			syntax.shouldBe("GT", syntax.currToken.Type)
+			syntax.Fetch()
+			b := syntax.Expression()
+			returned = a.Gt(b)
+		} else if syntax.currToken.Type == "GTE" {
+			syntax.shouldBe("GTE", syntax.currToken.Type)
+			syntax.Fetch()
+			b := syntax.Expression()
+			returned = a.Gte(b)
+		} else if syntax.currToken.Type == "LT" {
+			syntax.shouldBe("LT", syntax.currToken.Type)
+			syntax.Fetch()
+			b := syntax.Expression()
+			returned = a.Lt(b)
+		} else if syntax.currToken.Type == "LTE" {
+			syntax.shouldBe("LTE", syntax.currToken.Type)
+			syntax.Fetch()
+			b := syntax.Expression()
+			returned = a.Lte(b)
+		} else {
+			break
+		}
+	}
+	return returned
+}
+
+func (syntax *Syntax) IfStatement() (interface{}, error) {
+	syntax.shouldBe("_id", syntax.currToken.Type)
 	syntax.Fetch()
+	condMustTrue := syntax.ConditionExpression()
+	syntax.shouldBe("LCURLYBRACKET", syntax.currToken.Type)
+	syntax.Fetch()
+	if condMustTrue.GetValue().(bool) {
+		syntax.ConditionStatement()
+	}
+	syntax.shouldBe("RCURLYBRACKET", syntax.currToken.Type)
 	return nil, nil
 }
 
 func (syntax *Syntax) CompoundStatement() (interface{}, error) {
-	/*
-		compound_statement: BEGIN statement_list END
-	*/
-	if syntax.currToken.Value == "BEGIN" {
-		syntax.shouldBe("_id", syntax.currToken.Type)
-		syntax.Fetch()
-
-		syntax.StatementList()
-
-		if syntax.currToken.Value == "END" {
-			syntax.shouldBe("_id", syntax.currToken.Type)
-			syntax.Fetch()
-		}
-		return nil, nil
-	}
-
-	panic(errors.New("Syntax Error"))
+	syntax.StatementList()
 	return nil, nil
 }
 
@@ -113,8 +141,10 @@ func (syntax *Syntax) Statement() (interface{}, error) {
 	*/
 	if syntax.currToken.Type == "_id" && !syntax.lexer.IsReservedKeyword(syntax.currToken.Value.(string)) {
 		return syntax.AssignmetStatement()
-	} else if syntax.currToken.Type == "_id" && syntax.currToken.Value == "ASSERT" {
+	} else if syntax.currToken.Type == "_id" && syntax.currToken.Value == "assert" {
 		return syntax.Assert()
+	} else if syntax.currToken.Type == "_id" && syntax.currToken.Value == "if" {
+		return syntax.IfStatement()
 	}
 	return nil, nil
 }
@@ -128,23 +158,57 @@ func (syntax *Syntax) AssignmetStatement() (interface{}, error) {
 	syntax.Fetch()
 	_pseudoval := syntax.Expression()
 
-	_obj := object.New(_symName, _pseudoval.Type, _pseudoval.Value)
-	syntax.symbolTable.Push(_symName, _obj)
+	syntax.symbolTable.Push(_symName, _pseudoval)
 
 	return nil, nil
 }
 
-func (syntax *Syntax) Variable() *object.Object {
+func (syntax *Syntax) Variable() object.IObject {
 	/*
 		variable : ID
 	*/
 	syntax.shouldBe("_id", syntax.currToken.Type)
-	_var := syntax.symbolTable.Get(syntax.currToken.Value.(string))
+	_id := syntax.currToken.Value.(string)
+	_var := syntax.symbolTable.Get(_id)
 	syntax.Fetch()
+	for {
+		if syntax.currToken.Type == "LBRACKET" {
+			syntax.shouldBe("LBRACKET", syntax.currToken.Type)
+			syntax.Fetch()
+			syntax.shouldBe("INTEGER", syntax.currToken.Type)
+			_index := syntax.currToken.Value
+			__obj := _var.GetValue().([]object.IObject)
+			_var = __obj[_index.(int)]
+			syntax.Fetch()
+			syntax.shouldBe("RBRACKET", syntax.currToken.Type)
+			syntax.Fetch()
+		} else {
+			break
+		}
+	}
 	return _var
 }
 
-func (syntax *Syntax) Expression() *object.Object {
+func (syntax *Syntax) List() []object.IObject {
+	/*
+		variable : ID
+	*/
+	lst := []object.IObject{}
+	lst = append(lst, syntax.Expression())
+	for {
+		if syntax.currToken.Type == "COMMA" {
+			syntax.shouldBe("COMMA", syntax.currToken.Type)
+			syntax.Fetch()
+			lst = append(lst, syntax.Expression())
+		} else {
+			break
+		}
+	}
+
+	return lst
+}
+
+func (syntax *Syntax) Expression() object.IObject {
 	result := syntax.Term()
 	for {
 		if syntax.currToken.Type == "PLUS" || syntax.currToken.Type == "MINUS" {
@@ -164,7 +228,7 @@ func (syntax *Syntax) Expression() *object.Object {
 	return result
 }
 
-func (syntax *Syntax) Term() *object.Object {
+func (syntax *Syntax) Term() object.IObject {
 	result := syntax.Factor()
 	for {
 		if syntax.currToken.Type == "MULTIPLY" || syntax.currToken.Type == "DIVIDE" {
@@ -184,15 +248,12 @@ func (syntax *Syntax) Term() *object.Object {
 	return result
 }
 
-func (syntax *Syntax) Factor() *object.Object {
+func (syntax *Syntax) Factor() object.IObject {
 	if syntax.currToken.Type == "INTEGER" {
 		syntax.shouldBe("INTEGER", syntax.currToken.Type)
 		i, _ := syntax.currToken.Value.(int)
 		syntax.Fetch()
-		return &object.Object{
-			Value: i,
-			Type:  "INTEGER",
-		}
+		return integer.New("INTEGER", i)
 	} else if syntax.currToken.Type == "LPAREN" {
 		syntax.shouldBe("LPAREN", syntax.currToken.Type)
 		syntax.Fetch()
@@ -200,20 +261,21 @@ func (syntax *Syntax) Factor() *object.Object {
 		syntax.shouldBe("RPAREN", syntax.currToken.Type)
 		syntax.Fetch()
 		return i
+	} else if syntax.currToken.Type == "LBRACKET" {
+		syntax.shouldBe("LBRACKET", syntax.currToken.Type)
+		syntax.Fetch()
+		lst := syntax.List()
+		syntax.shouldBe("RBRACKET", syntax.currToken.Type)
+		syntax.Fetch()
+		return listo.New("LIST", lst)
 	} else if syntax.currToken.Type == "STRING" {
 		_string := syntax.currToken.Value
 		syntax.shouldBe("STRING", syntax.currToken.Type)
 		syntax.Fetch()
-		return &object.Object{
-			Value: _string,
-			Type:  "STRING",
-		}
+		return stringo.New("STRING", _string)
 	} else {
 		_var := syntax.Variable()
-		return &object.Object{
-			Value: _var.Value,
-			Type:  _var.Type,
-		}
+		return _var
 	}
 	return nil
 }

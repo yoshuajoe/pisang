@@ -1,8 +1,4 @@
-PROGRAM kalori;
-BEGIN
-    nasiPerGram := 1000;
-    laukRataRata := 5000;
-    jumlahMakan := 3;
-    totalKalori := (nasiPerGram + laukRataRata) * jumlahMakan;
-    ASSERT totalKalori;
-END.
+siswaDalamKelas := ["Aldo", "Aldi", "Andi", "Ali", "Ando"];
+if siswaDalamKelas[1] == "Aldi"{
+    assert "Halo " + siswaDalamKelas[1] + ", salam kenal!";
+}

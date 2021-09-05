@@ -16,21 +16,17 @@ type Lexer struct {
 
 func New(line string) (ILexer, error) {
 	reservedKeywords := map[string]token.Token{
-		"PROGRAM": token.Token{
+		"if": token.Token{
 			Type:  "_id",
-			Value: "PROGRAM",
+			Value: "if",
 		},
-		"BEGIN": token.Token{
+		"else": token.Token{
 			Type:  "_id",
-			Value: "BEGIN",
+			Value: "else",
 		},
-		"END": token.Token{
+		"assert": token.Token{
 			Type:  "_id",
-			Value: "END",
-		},
-		"ASSERT": token.Token{
-			Type:  "_id",
-			Value: "ASSERT",
+			Value: "assert",
 		},
 	}
 
@@ -57,7 +53,11 @@ func (lexer *Lexer) skipWhiteSpace() {
 
 func (lexer *Lexer) advance() {
 	lexer.position += 1
-	lexer.currChar = lexer.line[lexer.position]
+	if lexer.position >= len(lexer.line) {
+		lexer.currChar = 0
+	} else {
+		lexer.currChar = lexer.line[lexer.position]
+	}
 }
 
 func (lexer *Lexer) integer() (int, error) {
@@ -125,14 +125,42 @@ func (lexer *Lexer) peek() *string {
 }
 
 func (lexer *Lexer) GetNextToken() (token.Token, error) {
-	if lexer.currChar == '.' {
+	if lexer.currChar == 0 {
 		return token.Token{
 			Type:  "EOF",
-			Value: '.',
+			Value: byte(0),
 		}, nil
 	}
 	if lexer.currChar == ' ' || lexer.currChar == '\n' || lexer.currChar == '\t' {
 		lexer.skipWhiteSpace()
+	}
+	if lexer.currChar == '[' {
+		lexer.advance()
+		return token.Token{
+			Type:  "LBRACKET",
+			Value: "[",
+		}, nil
+	}
+	if lexer.currChar == ']' {
+		lexer.advance()
+		return token.Token{
+			Type:  "RBRACKET",
+			Value: "]",
+		}, nil
+	}
+	if lexer.currChar == '{' {
+		lexer.advance()
+		return token.Token{
+			Type:  "LCURLYBRACKET",
+			Value: "{",
+		}, nil
+	}
+	if lexer.currChar == '}' {
+		lexer.advance()
+		return token.Token{
+			Type:  "RCURLYBRACKET",
+			Value: "}",
+		}, nil
 	}
 	if lexer.currChar == '"' {
 		s, e := lexer.string()
@@ -217,12 +245,34 @@ func (lexer *Lexer) GetNextToken() (token.Token, error) {
 			Value: "<=",
 		}, nil
 	}
-
+	if lexer.currChar == '!' && *lexer.peek() == "=" {
+		lexer.advance()
+		lexer.advance()
+		return token.Token{
+			Type:  "NEQ",
+			Value: "!=",
+		}, nil
+	}
+	if lexer.currChar == '=' && *lexer.peek() == "=" {
+		lexer.advance()
+		lexer.advance()
+		return token.Token{
+			Type:  "EQ",
+			Value: "==",
+		}, nil
+	}
 	if lexer.currChar == ';' {
 		lexer.advance()
 		return token.Token{
 			Type:  "SEMICOLON",
 			Value: ";",
+		}, nil
+	}
+	if lexer.currChar == ',' {
+		lexer.advance()
+		return token.Token{
+			Type:  "COMMA",
+			Value: ",",
 		}, nil
 	}
 	return token.Token{}, fmt.Errorf(fmt.Sprintf("Lexer Error: Invalid input at position: %v", lexer.position))
