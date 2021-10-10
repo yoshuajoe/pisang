@@ -3,6 +3,7 @@ package stringo
 import (
 	"pisang/internal/app/object"
 	"pisang/internal/app/object/boolean"
+	"strings"
 )
 
 type String struct {
@@ -133,6 +134,20 @@ func (obj *String) Eq(newObj object.IObject) object.IObject {
 			Value: true,
 		}
 	}
+	return &boolean.Boolean{
+		Type:  "BOOL",
+		Value: false,
+	}
+
+}
+func (obj *String) In(newObj object.IObject) object.IObject {
+	if strings.Contains(obj.Value.(string), newObj.GetValue().(string)) {
+		return &boolean.Boolean{
+			Type:  "BOOL",
+			Value: true,
+		}
+	}
+
 	return &boolean.Boolean{
 		Type:  "BOOL",
 		Value: false,

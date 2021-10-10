@@ -47,7 +47,7 @@ func main() {
 	lexer, lexerErr := lexer.New(strings.Join(lines, "\n"))
 	interceptPanic(lexerErr)
 
-	syntax, syntaxErr := syntax.New(lexer)
+	syntax, syntaxErr := syntax.New(lexer, nil, nil, nil, "")
 	interceptPanic(syntaxErr)
 
 	_, exprErr := syntax.Program()

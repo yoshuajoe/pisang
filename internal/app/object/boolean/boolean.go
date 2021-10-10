@@ -95,6 +95,10 @@ func (obj *Boolean) Eq(newObj object.IObject) object.IObject {
 	}
 }
 
+func (obj *Boolean) In(newObj object.IObject) object.IObject {
+	return nil
+}
+
 func (obj *Boolean) Neq(newObj object.IObject) object.IObject {
 	if obj.Value != newObj.GetValue() {
 		return &Boolean{

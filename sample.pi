@@ -1,4 +1,10 @@
-siswaDalamKelas := ["Aldo", "Aldi", "Andi", "Ali", "Ando"];
-if siswaDalamKelas[1] == "Aldi"{
-    assert "Halo " + siswaDalamKelas[1] + ", salam kenal!";
+sentence := "I wouldn't buy this broken USB cable";
+badWords := [
+    "broken"   
+];
+
+if badWords[0] in sentence{
+    assert "Negative";
+}else{
+    assert "Neutral"
 }

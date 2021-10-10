@@ -28,6 +28,10 @@ func New(line string) (ILexer, error) {
 			Type:  "_id",
 			Value: "assert",
 		},
+		"in": token.Token{
+			Type:  "IN",
+			Value: "in",
+		},
 	}
 
 	return &Lexer{
@@ -261,6 +265,20 @@ func (lexer *Lexer) GetNextToken() (token.Token, error) {
 			Value: "==",
 		}, nil
 	}
+	if lexer.currChar == '>' {
+		lexer.advance()
+		return token.Token{
+			Type:  "GT",
+			Value: ">",
+		}, nil
+	}
+	if lexer.currChar == '<' {
+		lexer.advance()
+		return token.Token{
+			Type:  "LT",
+			Value: "<",
+		}, nil
+	}
 	if lexer.currChar == ';' {
 		lexer.advance()
 		return token.Token{
@@ -275,6 +293,7 @@ func (lexer *Lexer) GetNextToken() (token.Token, error) {
 			Value: ",",
 		}, nil
 	}
+
 	return token.Token{}, fmt.Errorf(fmt.Sprintf("Lexer Error: Invalid input at position: %v", lexer.position))
 }
 

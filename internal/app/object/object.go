@@ -25,6 +25,7 @@ type IObject interface {
 	Lt(IObject) IObject
 	Lte(IObject) IObject
 	Eq(IObject) IObject
+	In(IObject) IObject
 	Neq(IObject) IObject
 	GetValue() interface{}
 	GetType() string

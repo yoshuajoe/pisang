@@ -138,6 +138,21 @@ func (obj *List) Eq(newObj object.IObject) object.IObject {
 	}
 }
 
+func (obj *List) In(newObj object.IObject) object.IObject {
+	for _, row := range obj.GetValue().([]object.IObject) {
+		if row.GetValue() == newObj.GetValue() {
+			return &boolean.Boolean{
+				Type:  "BOOL",
+				Value: true,
+			}
+		}
+	}
+	return &boolean.Boolean{
+		Type:  "BOOL",
+		Value: false,
+	}
+}
+
 func (obj *List) Neq(newObj object.IObject) object.IObject {
 	if obj.Value != newObj.GetValue() {
 		return &boolean.Boolean{

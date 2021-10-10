@@ -138,6 +138,10 @@ func (obj *Integer) Eq(newObj object.IObject) object.IObject {
 	}
 }
 
+func (obj *Integer) In(newObj object.IObject) object.IObject {
+	return nil
+}
+
 func (obj *Integer) Neq(newObj object.IObject) object.IObject {
 	if obj.Value != newObj.GetValue() {
 		return &boolean.Boolean{
